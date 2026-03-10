@@ -3,14 +3,14 @@
 This repository contains the data, code, and results associated with the review article:
 
 > **"Advancements in Predictive Modeling for Peak Particle Velocity in Rock Blasting: Tracing the Evolution from Empirical Models to Artificial Intelligence Techniques"**
-> Louis D. G. Tabosa, José J. de Figueiredo, Vidal F. N. Torres, Saulo S. Martins
+> Louis D. G. Tabosa, José J. de Figueiredo*, Vidal F. N. Torres, Saulo S. Martins
 > Federal University of Pará (UFPA) · Unifesspa · Vale Institute of Technology (ITV)
 
 ---
 
 ## Overview
 
-The prediction of Peak Particle Velocity (PPV) is a fundamental task for operational safety in rock blasting activities. This work systematically examines the methodological evolution of predictive PPV models — from pioneering empirical approaches (USBM) to contemporary Artificial Intelligence techniques — and presents comparative numerical experiments using synthetic data to evaluate Empirical, ANN, and Empirical-Driven Machine Learning (EDML) strategies.
+The prediction of Peak Particle Velocity (PPV) is a fundamental task for operational safety in rock blasting activities. This work systematically examines the methodological evolution of predictive PPV models — from pioneering empirical approaches (USBM) to contemporary Artificial Intelligence techniques — and presents comparative numerical experiments using physics-consistent synthetic data to evaluate Empirical, ANN, SVR, and Empirical-Driven Machine Learning (EDML) strategies.
 
 ---
 
@@ -59,9 +59,9 @@ This chapter applies the USBM empirical model and an Artificial Neural Network t
 
 ---
 
-## Chapter 7 — Comparative Numerical Analysis: Empirical, ANN, and EDML Approaches
+## Chapter 7 — Comparative Numerical Analysis: Empirical, ANN, SVR, and EDML Approaches
 
-This chapter presents controlled numerical experiments using physics-consistent synthetic data to compare three modeling strategies across two physical scenarios:
+This chapter presents controlled numerical experiments using physics-consistent synthetic data to compare four modeling strategies across two physical scenarios:
 
 - **Scenario A** — Pure geometric spreading (power-law attenuation)
 - **Scenario B** — Geometric spreading with material attenuation (exponential damping)
@@ -72,13 +72,14 @@ This chapter presents controlled numerical experiments using physics-consistent 
 |-------|-------------|
 | **Empirical** | Standard USBM power-law regression in log-log space |
 | **ANN** | Feedforward neural network trained directly on blast parameters |
+| **SVR** | Support Vector Regression with RBF kernel, hyperparameters tuned via cross-validation |
 | **EDML** | Empirical-Driven Machine Learning — ANN trained on residuals from the empirical baseline |
 
 ### Files
 
 | File | Description |
 |------|-------------|
-| `EDML-ANN.py` | Main script: generates synthetic data, trains all three models, and produces comparison figures |
+| `EDML-ANN.py` | Main script: generates synthetic data, trains all four models, and produces comparison figures |
 | `Output/` | Pre-computed figures and performance metrics for both scenarios |
 
 ### Dependencies
@@ -102,12 +103,12 @@ pip install numpy pandas matplotlib scikit-learn
 ### How to run
 
 ```bash
-python EDML-ANN.py
+python ann_svr_edml.py
 ```
 
 The script will:
 1. Generate synthetic PPV datasets for Scenario A and Scenario B
-2. Train the Empirical, ANN, and EDML models
+2. Train the Empirical, ANN, SVR, and EDML models
 3. Output performance metrics (R², RMSE, training time)
 4. Save comparison figures to the `Output/` folder
 
@@ -119,14 +120,24 @@ The script will:
 
 | Scenario | Model | R² | RMSE | Training Time |
 |----------|-------|----|------|---------------|
-| A — Geometric only | Empirical | 0.782 | 0.425 | 1.4 ms |
-| A — Geometric only | ANN | 0.770 | 0.437 | ~309 s |
-| A — Geometric only | EDML | 0.779 | 0.428 | ~186 s |
-| B — With attenuation | Empirical | 0.883 | 0.685 | 1.2 ms |
-| B — With attenuation | ANN | 0.952 | 0.439 | ~309 s |
-| B — With attenuation | EDML | **0.954** | **0.431** | ~133 s |
+| A — Geometric only | Empirical | 0.782 | 0.425 | 1.3 ms |
+| A — Geometric only | ANN | 0.770 | 0.437 | ~319 s |
+| A — Geometric only | SVR | 0.763 | 0.443 | 1.44 s |
+| A — Geometric only | EDML | 0.779 | 0.428 | ~126 s |
+| B — With attenuation | Empirical | 0.883 | 0.685 | 1.3 ms |
+| B — With attenuation | ANN | 0.952 | 0.439 | ~383 s |
+| B — With attenuation | SVR | 0.951 | 0.445 | 3.22 s |
+| B — With attenuation | EDML | **0.954** | **0.431** | ~273 s |
 
-The EDML approach achieves the best accuracy in the physically realistic scenario (B) while reducing training time by ~57% compared to the standalone ANN.
+The EDML approach achieves the best accuracy in the physically realistic scenario (B). The SVR offers a compelling accuracy-to-cost ratio, achieving near-identical accuracy to ANN while being approximately 100× faster to train — making it particularly attractive for real-time or resource-constrained applications.
+
+---
+
+## Data Availability
+
+The synthetic datasets used in the numerical experiments (Section 7) are generated programmatically and can be fully reproduced using the provided source code. The field dataset used in the validation analysis (Fig. 5, Section 6.3) is publicly available in:
+
+> Hammed et al. (2018). *Peak particle velocity data acquisition for monitoring blast induced earthquakes in quarry sites*. Data in Brief, 19, 398–408.
 
 ---
 
@@ -146,5 +157,5 @@ Tracing the Evolution from Empirical Models to Artificial Intelligence Technique
 
 - **Louis D. G. Tabosa** — Unifesspa / UFPA
 - **José J. de Figueiredo** — UFPA
-- **Vidal F. N. Torres** — Vale Institute of Technology (ITV)
-- **Saulo S. Martins** — UFPA 
+- **Vidal F. N. Torres** — ITV
+- **Saulo S. Martins** — UFPA
