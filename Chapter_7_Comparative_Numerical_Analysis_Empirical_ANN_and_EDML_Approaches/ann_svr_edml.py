@@ -230,24 +230,24 @@ def tune_svr(Xtr, ytr, Xva, yva, label="SVR"):
     """
     C_pool = [1.0, 10.0, 50.0, 100.0]
     epsilon_pool = [0.01, 0.05, 0.1, 0.2]
-    gamma_pool = ["scale", "auto", 0.01, 0.1]
+    gamma_svr_pool = ["scale", "auto", 0.01, 0.1]
 
     best_rmse = np.inf
     best_cfg = None
     best_model = None
 
-    all_configs = list(itertools.product(C_pool, epsilon_pool, gamma_pool))
+    all_configs = list(itertools.product(C_pool, epsilon_pool, gamma_svr_pool))
     total = len(all_configs)
 
-    for i, (C, eps, g) in enumerate(all_configs):
+    for i, (C, eps, g_svr) in enumerate(all_configs):
         cfg = {
             "C": float(C),
             "epsilon": float(eps),
-            "gamma": g,
+            "gamma_svr": g_svr,
         }
         pipe = Pipeline([
             ("scaler", StandardScaler()),
-            ("svr", SVR(kernel="rbf", **cfg))
+            ("svr", SVR(kernel="rbf", C=float(C), epsilon=float(eps), gamma=g_svr))
         ])
         pipe.fit(Xtr, ytr)
         yhat = pipe.predict(Xva)
@@ -527,7 +527,7 @@ def run_scenario(scenario_name, use_attenuation):
     print("    Retraining SVR on train+validation...")
     final_svr = Pipeline([
         ("scaler", StandardScaler()),
-        ("svr", SVR(kernel="rbf", **svr_cfg))
+        ("svr", SVR(kernel="rbf", C=svr_cfg["C"], epsilon=svr_cfg["epsilon"], gamma=svr_cfg["gamma_svr"]))
     ])
     final_svr.fit(Xtrva_ann, ytrva)
 
