@@ -13,6 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.neural_network import MLPRegressor
+from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # ============================================================
@@ -41,9 +42,9 @@ plt.rcParams.update({
 # True parameters (from synthetic data)
 TRUE_PARAMS = {"c": 1200.0, "a": 0.8, "b": -1.6, "gamma": -0.005}
 
-# Colors and Symbols — 3 models
-COLORS = {"Empirical": "#1f77b4", "ANN": "#ff7f0e", "EDML": "#2ca02c"}
-MARKERS = {"Empirical": "o", "ANN": "s", "EDML": "^"}
+# Colors and Symbols — 4 models
+COLORS = {"Empirical": "#F39C12", "ANN": "#3498DB", "EDML": "#38761d", "SVR": "#9B59B6"}
+MARKERS = {"Empirical": "o", "ANN": "s", "EDML": "^", "SVR": "v"}
 
 # ============================================================
 # SYNTHETIC DATA GENERATION
@@ -221,6 +222,49 @@ def tune_ann(Xtr, ytr, Xva, yva, label="ANN"):
     return best_model, best_cfg, best_rmse
 
 # ============================================================
+# TUNING SVR
+# ============================================================
+def tune_svr(Xtr, ytr, Xva, yva, label="SVR"):
+    """
+    Grid search for Support Vector Regression (SVR - RBF kernel).
+    """
+    C_pool = [1.0, 10.0, 50.0, 100.0]
+    epsilon_pool = [0.01, 0.05, 0.1, 0.2]
+    gamma_pool = ["scale", "auto", 0.01, 0.1]
+
+    best_rmse = np.inf
+    best_cfg = None
+    best_model = None
+
+    all_configs = list(itertools.product(C_pool, epsilon_pool, gamma_pool))
+    total = len(all_configs)
+
+    for i, (C, eps, g) in enumerate(all_configs):
+        cfg = {
+            "C": float(C),
+            "epsilon": float(eps),
+            "gamma": g,
+        }
+        pipe = Pipeline([
+            ("scaler", StandardScaler()),
+            ("svr", SVR(kernel="rbf", **cfg))
+        ])
+        pipe.fit(Xtr, ytr)
+        yhat = pipe.predict(Xva)
+        rmse_val = float(np.sqrt(mean_squared_error(yva, yhat)))
+
+        if rmse_val < best_rmse:
+            best_rmse = rmse_val
+            best_cfg = cfg
+            best_model = pipe
+
+        if (i + 1) % (max(1, total // 5)) == 0 or (i + 1) == total:
+            print(f"    {label} Grid Search trial {i+1}/{total} | best RMSE: {best_rmse:.6f}")
+
+    return best_model, best_cfg, best_rmse
+
+
+# ============================================================
 # METRICS
 # ============================================================
 def compute_metrics(y_true, y_pred):
@@ -312,7 +356,8 @@ def save_residuals_boxplot(residuals_dict, title, filename):
         data.append(res); labels.append(name)
         colors_box.append(COLORS.get(name, "gray"))
     bp = ax.boxplot(data, tick_labels=labels, patch_artist=True, widths=0.5,
-                    showfliers=True, flierprops=dict(marker="o", markersize=3, alpha=0.4))
+                    showfliers=True, flierprops=dict(marker="o", markersize=3, alpha=0.4),
+                    medianprops=dict(color="black", linewidth=1.5))
     for patch, color in zip(bp["boxes"], colors_box):
         patch.set_facecolor(color); patch.set_alpha(0.6)
     ax.axhline(0, color="k", linestyle="--", linewidth=1)
@@ -472,6 +517,29 @@ def run_scenario(scenario_name, use_attenuation):
     print(f"    Tempo: {t_ann:.2f} s")
 
     # ----------------------------------------------------------
+    # 4.5) SVR — Support Vector Regression (RBF)
+    # ----------------------------------------------------------
+    print(f"\n[4.5] Modelo SVR (RBF kernel, direct prediction): features = [D, Q]")
+    t0_svr = time.perf_counter()
+    best_svr, svr_cfg, _ = tune_svr(Xtr_ann, ytr, Xva_ann, yva, label="SVR")
+
+    #   Retrain on train + validation
+    print("    Retraining SVR on train+validation...")
+    final_svr = Pipeline([
+        ("scaler", StandardScaler()),
+        ("svr", SVR(kernel="rbf", **svr_cfg))
+    ])
+    final_svr.fit(Xtrva_ann, ytrva)
+
+    ysvr_te = final_svr.predict(Xte_ann)
+    t_svr = time.perf_counter() - t0_svr
+    met_svr = compute_metrics(yte, ysvr_te)
+    print(f"    Best SVR config: {svr_cfg}")
+    print(f"    RMSE={met_svr['RMSE']:.4f}, R2={met_svr['R2']:.4f}")
+    print(f"    Tempo: {t_svr:.2f} s")
+
+
+    # ----------------------------------------------------------
     # 5) EDML — Empirical + ANN on residual
     # ----------------------------------------------------------
     print(f"\n[5] Modelo EDML: Empirical + ANN on residual")
@@ -543,6 +611,7 @@ def run_scenario(scenario_name, use_attenuation):
     rows_table = [
         {"Modelo": "Empirical", **met_emp, "Tempo_s": round(t_emp, 4)},
         {"Modelo": "ANN", **met_ann, "Tempo_s": round(t_ann, 2)},
+        {"Modelo": "SVR", **met_svr, "Tempo_s": round(t_svr, 2)},
         {"Modelo": "EDML", **met_edml, "Tempo_s": round(t_edml, 2)},
     ]
     df_table = pd.DataFrame(rows_table)
@@ -558,6 +627,7 @@ def run_scenario(scenario_name, use_attenuation):
     pred_dict = {
         "Empirical": (yemp_te, met_emp),
         "ANN": (yann_te, met_ann),
+        "SVR": (ysvr_te, met_svr),
         "EDML": (yedml_te, met_edml),
     }
 
@@ -579,6 +649,7 @@ def run_scenario(scenario_name, use_attenuation):
     yemp_grid = predict_empirical(emp, D_grid, np.full_like(D_grid, Q_ref))
     Xgrid_ann = build_features_ann(D_grid, np.full_like(D_grid, Q_ref))
     yann_grid = final_ann.predict(Xgrid_ann)
+    ysvr_grid = final_svr.predict(Xgrid_ann)
     yemp_grid_for_edml = yemp_grid  # empirical prediction as feature
     Xgrid_edml = build_features_edml(D_grid, np.full_like(D_grid, Q_ref),
                                      yemp_grid_for_edml, gamma=gamma_feat)
@@ -594,6 +665,7 @@ def run_scenario(scenario_name, use_attenuation):
     curves = [
         ("Empirical", 10 ** yemp_grid, COLORS["Empirical"], "--"),
         ("ANN", 10 ** yann_grid, COLORS["ANN"], ":"),
+        ("SVR", 10 ** ysvr_grid, COLORS["SVR"], "-"),
         ("EDML", 10 ** yedml_grid, COLORS["EDML"], "-."),
     ]
     save_ppv_vs_distance(D, PPV_obs, D_grid, Q_ref, curves, ppv_true_grid,
@@ -602,14 +674,14 @@ def run_scenario(scenario_name, use_attenuation):
 
     # 7d) Boxplot of residuals
     save_residuals_boxplot(
-        {"Empirical": yte - yemp_te, "ANN": yte - yann_te, "EDML": yte - yedml_te},
+        {"Empirical": yte - yemp_te, "ANN": yte - yann_te, "SVR": yte - ysvr_te, "EDML": yte - yedml_te},
         f"Residuals distribution — Scenario {scenario_name}",
         f"{OUT_DIR}/{prefix}_fig_residuals_boxplot.png"
     )
 
     # 7e) Computational cost — bar chart
     save_computational_cost(
-        {"Empirical": t_emp, "ANN": t_ann, "EDML": t_edml},
+        {"Empirical": t_emp, "ANN": t_ann, "SVR": t_svr, "EDML": t_edml},
         f"Computational Cost — Scenario {scenario_name}",
         f"{OUT_DIR}/{prefix}_fig_computational_cost.png"
     )
@@ -623,6 +695,7 @@ def run_scenario(scenario_name, use_attenuation):
     print(f"\nModels:"
           f"\nEmpirical:  (RMSE={met_emp['RMSE']:.4f}, R2={met_emp['R2']:.4f}, Tempo={t_emp:.4f}s)"
           f"\nANN:        (RMSE={met_ann['RMSE']:.4f}, R2={met_ann['R2']:.4f}, Tempo={t_ann:.2f}s)"
+          f"\nSVR:        (RMSE={met_svr['RMSE']:.4f}, R2={met_svr['R2']:.4f}, Tempo={t_svr:.2f}s)"
           f"\nEDML:       (RMSE={met_edml['RMSE']:.4f}, R2={met_edml['R2']:.4f}, Tempo={t_edml:.2f}s)")
 
     print(f"\nFiles in {OUT_DIR}/:")
