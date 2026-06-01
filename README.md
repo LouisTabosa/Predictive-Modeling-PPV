@@ -56,7 +56,7 @@ This chapter applies the USBM empirical model and an Artificial Neural Network t
 
 ---
 
-## Chapter 7 — Removed to attend peer review.
+## Chapter 7 — Removed to comply with peer review.
 
 ## Citation
 
