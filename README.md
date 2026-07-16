@@ -3,7 +3,9 @@
 This repository contains the data, code, and results associated with the review article:
 
 > **"Advancements in Predictive Modeling for Peak Particle Velocity in Rock Blasting: Tracing the Evolution from Empirical Models to Artificial Intelligence Techniques"**
+> 
 > Louis D. G. Tabosa, José J. S. de Figueiredo, Vidal F. N. Torres, Saulo S. Martins
+> 
 > Federal University of Pará (UFPA) · Universidade Federal do Sul e Sudeste do Pará (Unifesspa) · Vale Institute of Technology (ITV)
 
 ---
