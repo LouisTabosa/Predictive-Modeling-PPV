@@ -3,7 +3,7 @@
 This repository contains the data, code, and results associated with the review article:
 
 > **"Advancements in Predictive Modeling for Peak Particle Velocity in Rock Blasting: Tracing the Evolution from Empirical Models to Artificial Intelligence Techniques"**
-> Louis D. G. Tabosa, José J. de Figueiredo, Vidal F. N. Torres, Saulo S. Martins
+> Louis D. G. Tabosa, José J. S. de Figueiredo, Vidal F. N. Torres, Saulo S. Martins
 > Federal University of Pará (UFPA) · Universidade Federal do SUl e Sudeste do Pará (Unifesspa) · Vale Institute of Technology (ITV)
 
 ---
@@ -63,9 +63,10 @@ This chapter applies the USBM empirical model and an Artificial Neural Network t
 If you use this code or data in your research, please cite:
 
 ```
-Tabosa, L. D. G., de Figueiredo, J. J., Torres, V. F. N., & Martins, S. S.
+Tabosa, L. D. G., de Figueiredo, J. J. S., Torres, V. F. N., & Martins, S. S.
 Advancements in Predictive Modeling for Peak Particle Velocity in Rock Blasting:
 Tracing the Evolution from Empirical Models to Artificial Intelligence Techniques.
+Arch Computat Methods Eng (2026). https://doi.org/10.1007/s11831-026-10714-4
 ```
 
 ---
@@ -73,6 +74,6 @@ Tracing the Evolution from Empirical Models to Artificial Intelligence Technique
 ## Authors
 
 - **Louis D. G. Tabosa** — Unifesspa / UFPA
-- **José J. de Figueiredo** — UFPA
+- **José J. S. de Figueiredo** — UFPA
 - **Vidal F. N. Torres** — ITV
 - **Saulo S. Martins** — UFPA
