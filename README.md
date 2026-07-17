@@ -6,7 +6,7 @@ This repository contains the data, code, and results associated with the review 
 > 
 > Louis D. G. Tabosa, José J. S. de Figueiredo, Vidal F. N. Torres, Saulo S. Martins
 > 
-> Federal University of Pará (UFPA) · Universidade Federal do Sul e Sudeste do Pará (Unifesspa) · Vale Institute of Technology (ITV)
+> Universidade Federal do Pará (UFPA) · Universidade Federal do Sul e Sudeste do Pará (Unifesspa) · Instituto Tecnológico Vale (ITV)
 
 ---
 
